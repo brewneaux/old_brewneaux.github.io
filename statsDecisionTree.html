@@ -1,0 +1,609 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script>
+        var path = {
+            q1: {
+                question_text: 'What are you trying to do?',
+                answers: [
+                    {answer_text: 'Predict something', links_to: 'q2'},
+                    {answer_text: 'Understand what caused something', links_to: 'q17'},
+                    {answer_text: 'Search for patterns in the data', links_to: 'q20'},
+                ]
+            },
+            q2: {
+                question_text: 'Are you predicting something in the future based on the past?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'q3'},
+                    {answer_text: 'No', links_to: 'q9'},
+                ]
+            },
+            q3: {
+                question_text: 'Do there appear to be structural breaks in the time series of the response variable?',
+                answers: [
+                    {answer_text: 'No', links_to: 'q4'},
+                    {answer_text: 'Yes', links_to: 'end-supw'},
+                ]
+            },
+            q4: {
+                question_text: 'Does the time series of the response variable appear to be composed of a trend and various seasonal patterns?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'q5'},
+                    {answer_text: 'No', links_to: 'q8'},
+                ]
+            },
+            q5: {
+                question_text: 'Are you using other non-seasonal time series to explain additional patterns you see in the response variable?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'end-tfm'},
+                    {answer_text: 'No', links_to: 'q6'},
+                ]
+            },
+            q6: {
+                question_text: 'Are you using other seasonal time series as explanatory variables?',
+                answers: [
+                    {answer_text: 'No', links_to: 'q7'},
+                    {answer_text: 'Yes', links_to: 'end-var'},
+                ]
+            },
+            q7: {
+                question_text: 'Do you need something where you can visualize the split between trend, seasonality and noise?',
+                answers: [
+                    {answer_text: 'No', links_to: 'end-arima'},
+                    {answer_text: 'Yes', links_to: 'end-tsd'},
+                ]
+            },
+            q8: {
+                question_text: 'Are you using other time series to explain the pattern you see in the response variable?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'end-tfm'},
+                    {answer_text: 'No', links_to: 'end-ses'},
+                ]
+            },
+            q9: {
+                question_text: 'Do you need to explain, measure, or understand the role of the variables you are using to make the prediction?',
+                answers: [
+                    {answer_text: 'No', links_to: 'q10'},
+                    {answer_text: 'Yes', links_to: 'q12'},
+                ]
+            },
+            q10: {
+                question_text: 'Are you looking for a solution that produces an equation that you can easily implement?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'end-regression'},
+                    {answer_text: 'No', links_to: 'q11'},
+                ]
+            },
+            q11: {
+                question_text: 'Are you....',
+                answers: [
+                    {answer_text: 'Having little success with simpler techniques or making incremental improvements to an existing model?', links_to: 'end-support'},
+                    {answer_text: 'Working with a large number of inputs?', links_to: 'end-dr-fs'},
+                    {answer_text: 'Just starting and therefore looking for something you can easily explain?', links_to: 'end-naive-bayes'},
+                ]
+            },
+            q12: {
+                question_text: 'Are there prior beliefs about the contributions of the drivers that need to be built in?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'end-bayesian'},
+                    {answer_text: 'No', links_to: 'q13'},
+                ]
+            },
+            q13: {
+                question_text: 'Is the response variable a function of some linear combination of drivers?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'q14'},
+                    {answer_text: 'No', links_to: 'end-bayesian'},
+                ]
+            },
+            q14: {
+                question_text: 'Is the data heirarchical in such a way that you\'d expect there to be some correlation between the predictions at each node? (Ex, exam results clustered around class, schools and regions)',
+                answers: [
+                    {answer_text: 'No', links_to: 'q15'},
+                    {answer_text: 'Yes', links_to: 'q16'},
+                ]
+            },
+            q15: {
+                question_text: 'What type of variable are you predicting?',
+                answers: [
+                    {answer_text: 'Binary', links_to: 'end-logreg'},
+                    {answer_text: 'Continuous', links_to: 'end-linreg'},
+                ]
+            },
+            q16: {
+                question_text: 'What type of variable are you predicting?',
+                answers: [
+                    {answer_text: 'Binary', links_to: 'end-lin-mixed-eff-model'},
+                    {answer_text: 'Continuous', links_to: 'end-gen-lin-model'},
+                ]
+            },
+            q17: {
+                question_text: 'Is the thing you are investigating part of a complex system involving feedback loops?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'q19'},
+                    {answer_text: 'No', links_to: 'q18'},
+                ]
+            },
+            q18: {
+                question_text: 'Do you need to measure the contribution of a cause to an outcome?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'q12'},
+                ]
+            },
+            q19: {
+                question_text: 'Is it necessary to model this system in such a way that individuals behave in different ways?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'end-agent'},
+                    {answer_text: 'No', links_to: 'end-systems'},
+                ]
+            },
+            q20: {
+                question_text: 'What kind of patterns?',
+                answers: [
+                    {answer_text: 'Patterns caused by hidden factors', links_to: 'q21'},
+                    {answer_text: 'Natural groupings in the data', links_to: 'q22'},
+                    {answer_text: 'Relationships between the variables', links_to: 'q31'},
+                ]
+            },
+            q21: {
+                question_text: 'What kind of latent variable do we think explains the data?',
+                answers: [
+                    {answer_text: 'Continuous', links_to: 'end-factor'},
+                    {answer_text: 'Categorical', links_to: 'end-latent-class'},
+                ]
+            },
+            q22: {
+                question_text: 'What kind of data is it?',
+                answers: [
+                    {answer_text: 'Tabular', links_to: 'q23'},
+                    {answer_text: 'Network', links_to: 'q29'},
+                    {answer_text: 'Unstructured', links_to: 'q30'},
+                ]
+            },
+            q23: {
+                question_text: 'How do you want to explore the data?',
+                answers: [
+                    {answer_text: 'Visually', links_to: 'q24'},
+                    {answer_text: 'Automated', links_to: 'q26'},
+                ]
+            },
+            q24: {
+                question_text: 'What kind of variables make up the data?',
+                answers: [
+                    {answer_text: 'Continuous', links_to: 'q25'},
+                    {answer_text: 'Categorical', links_to: 'end-multi-corres'},
+                    {answer_text: 'A mix of Continuous and Categorical', links_to: 'end-self-org-map'},
+                ]
+            },
+            q25: {
+                question_text: 'What kind of metric captures the similarity between the data points?',
+                answers: [
+                    {answer_text: 'Non-Euclidean', links_to: 'end-multidem-self-org-map'},
+                    {answer_text: 'Euclidean', links_to: 'end-principal-components-plot'},
+                ]
+            },
+            q26: {
+                question_text: 'Is the data set large?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'q28'},
+                    {answer_text: 'No', links_to: 'q27'},
+                ]
+            },
+            q27: {
+                question_text: 'Do you need to be able to examine the heirarchical structure of clusters?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'end-kmeans'},
+                    {answer_text: 'No', links_to: 'end-heir-clust'},
+                ]
+            }, 
+            q28: {
+                question_text: 'Do you need to be able to examine the heirarchical structure of clusters?',
+                answers: [
+                    {answer_text: 'Yes', links_to: 'end-birch'},
+                    {answer_text: 'No', links_to: 'end-kmeans'},
+                ]
+            },
+            q29: {
+                question_text: 'How do you want to explore the data?',
+                answers: [
+                    {answer_text: 'Visually', links_to: 'end-force-directed'},
+                    {answer_text: 'Automated', links_to: 'end-network'},
+                ]
+            },
+            q30: {
+                question_text: 'What kind of unstructured data?',
+                answers: [
+                    {answer_text: 'Text', links_to: 'end-hidden-markov'},
+                ]
+            },
+            q31: {
+                question_text: 'What kind of relationships are you interested in?',
+                answers: [
+                    {answer_text: 'Correlations', links_to: 'q32'},
+                    {answer_text: 'Conditional Dependencies', links_to: 'end-bayesian'},
+                ]
+            },
+            q32: {
+                question_text: 'What are the correlations between?',
+                answers: [
+                    {answer_text: 'Pairs of Variables', links_to: 'end-correlation'},
+                    {answer_text: 'Pairs of linear combinations of variables', links_to: 'end-canonical'},
+                ]
+            },
+            'end-supw': {
+                end_title: 'Use SUPW or fixed regressor bootstrap tests to test for location of structural breaks, and then split the sample and proceed with the most recent sgement',
+                links_to: 'q3',
+                wiki: ['https://en.wikipedia.org/wiki/Bootstrapping_(statistics)#Regression']
+            },
+            'end-tfm': {
+                end_title: 'Transfer Function Models',
+                wiki: ['https://en.wikipedia.org/wiki/Transfer_function']
+            },
+            'end-var': {
+                end_title: 'Vector AutoRegression',
+                wiki: ['https://en.wikipedia.org/wiki/Vector_autoregression']
+            },
+            'end-arima': {
+                end_title: 'ARIMA Exponential Smoothing',
+                wiki: ['https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average']
+            },
+            'end-tsd': {
+                end_title: 'Time Series Decomposition',
+                wiki: ['https://en.wikipedia.org/wiki/Decomposition_of_time_series']
+            },
+            'end-ses': {
+                end_title: 'Simple Exponential Smoothing',
+                wiki: ['https://en.wikipedia.org/wiki/Exponential_smoothing']
+            },
+            'end-regression': {
+                end_title: 'Regression',
+                wiki: ['https://en.wikipedia.org/wiki/Regression_analysis']
+            },
+            'end-support': {
+                end_title: 'Support Vector Machines, Neural Networks, Ensemble Methods',
+                wiki: ['https://en.wikipedia.org/wiki/Support_vector_machine', 'https://en.wikipedia.org/wiki/Neural_networks', 'https://en.wikipedia.org/wiki/Ensemble_learning']
+            },
+            'end-dr-fs': {
+                end_title: 'Dimension Reduction and/or Feature Selection',
+                full_text: "Use dimension reduction and/or feautre selection techniques to reduce inputs (if you are using cross validation, make sure you embed this step in the cross validation process",
+                wiki: ['https://en.wikipedia.org/wiki/Dimensionality_reduction', 'https://en.wikipedia.org/wiki/Feature_selection']
+            },
+            'end-naive-bayes': {
+                end_title: 'Naive Bayes Classifier, K Nearest Neighbors, Regression, Lasso Ridge Regression',
+                wiki: ['https://en.wikipedia.org/wiki/Naive_Bayes_classifier', 'https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm', 'https://en.wikipedia.org/wiki/Regression_analysis', 'https://en.wikipedia.org/wiki/Lasso_regression']
+            },
+            'end-bayesian': {
+                end_title: 'Bayesian Models',
+                wiki: ['https://en.wikipedia.org/wiki/Bayesian_network']
+            },
+            'end-logreg': {
+                end_title: 'Logistic Regression',
+                wiki: ['https://en.wikipedia.org/wiki/Logistic_regression']
+            },
+            'end-linreg': {
+                end_title: 'Linear Regression',
+                wiki: ['https://en.wikipedia.org/wiki/Linear_regression']
+            },
+            'end-lin-mixed-eff-model': {
+                end_title: 'Linear Mixed Effects Model',
+                wiki: ['https://en.wikipedia.org/wiki/Mixed_model']
+            },
+            'end-gen-lin-model': {
+                end_title: 'Generalized Linear Mixed Effects Model',
+                wiki: ['https://en.wikipedia.org/wiki/Generalized_linear_mixed_model']
+            },
+            'end-agent': {
+                end_title: 'Agent Based Model',
+                wiki: ['https://en.wikipedia.org/wiki/Agent-based_model']
+            },
+            'end-systems': {
+                end_title: 'Systems Dynamics Model',
+                wiki: ['https://en.wikipedia.org/wiki/System_dynamics']
+            },
+            'end-factor': {
+                end_title: 'Factor Analysis',
+                wiki: ['https://en.wikipedia.org/wiki/Factor_analysis']
+            },
+            'end-latent': {
+                end_title: 'Latent Class Analysis',
+                wiki: ['https://en.wikipedia.org/wiki/Latent_class_model']
+            },
+            'end-multi-corres': {
+                end_title: 'Multiple Correspondence Analysis, Self Organizing Maps',
+                wiki: ['https://en.wikipedia.org/wiki/Multiple_correspondence_analysis', 'https://en.wikipedia.org/wiki/Self-organizing_map']
+            },
+            'end-self-org-map': {
+                end_title: 'Self Organizing Map',
+                wiki: ['https://en.wikipedia.org/wiki/Self-organizing_map']
+            },
+            'end-multidem-self-org-map': {
+                end_title: 'Multidimensional scaling, Self Organizing Map',
+                wiki: ['https://en.wikipedia.org/wiki/Multidimensional_scaling', 'https://en.wikipedia.org/wiki/Self-organizing_map']
+            },
+            'end-principal': {
+                end_title: 'Principal Components Plot, Self Organizing Map',
+                wiki: ['https://en.wikipedia.org/wiki/Principal_component_analysis', 'https://en.wikipedia.org/wiki/Self-organizing_map']
+            },
+            'end-kmeans': {
+                end_title: 'K Means Clustering',
+                wiki: ['https://en.wikipedia.org/wiki/K-means_clustering']
+            },
+            'end-heir': {
+                end_title: 'Heirarchical Clustering',
+                wiki: ['https://en.wikipedia.org/wiki/Hierarchical_clustering']
+            },
+            'end-birch': {
+                end_title: 'BIRCH Clustering',
+                wiki: ['https://en.wikipedia.org/wiki/BIRCH']
+            },
+            'end-force': {
+                end_title: 'Force Directed Graph',
+                wiki: ['https://en.wikipedia.org/wiki/Force-directed_graph_drawing']
+            },
+            'end-network': {
+                end_title: 'Network Analysis',
+                wiki: ['https://en.wikipedia.org/wiki/Network_theory']
+            },
+            'end-hidden-markov': {
+                end_title: 'Hidden Markov Model, Latent Dirichlet Allocation',
+                wiki: ['https://en.wikipedia.org/wiki/Hidden_Markov_model', 'https://en.wikipedia.org/wiki/Latent_Dirichlet_allocation']
+            },
+            'end-correlation': {
+                end_title: 'Correlation Analysis',
+                wiki: ['https://en.wikipedia.org/wiki/Canonical_correlation']
+            },
+            'end-canonical': {
+                end_title: 'Canonical Correlation Analysis',
+                wiki: ['https://en.wikipedia.org/wiki/Canonical_correlation']
+            },
+
+        };
+
+        var clickPath = '';
+        var currentQuestionId;
+        // handle the back button
+        window.onhashchange = function() {       
+            if (location.hash.length > 0 && location.hash.replace('#', '') != currentQuestionId) {        
+                qId = location.hash.replace('#', '')
+                updateForNextQuestion(qId)
+            } 
+        }
+
+        function showAbout() {
+            $('#about-body').toggle();
+        }
+
+        function handleEndOfPath(endId) {
+            end_title = path[endId]['end_title']
+            wiki_links_array = path[endId]['wiki']
+            var clicks = clickPath.split('>');
+            var clickPathText = '';
+
+            $.each(clicks, function(index, value) {
+                var tabs = Array(index + 1).join('&nbsp;&nbsp;&nbsp;&nbsp;')
+                clickPathText += tabs + value + '<br />'
+            });
+
+            $('#end-clickpath').html(clickPathText);
+
+            if (path[endId].hasOwnProperty('full_text')) {
+                $('#end-full-text').text(path[endId]['full_text'])
+            } else {
+                $('#end-full-text').remove()
+            }
+            
+            wiki_liks = '<div id="end-wiki-title"> Wiki Links</div>';
+            $.each(wiki_links_array, function(ind, v ) {
+                wiki_liks += '<a href="' + v + '">' + v + '</a> <br />'
+            })
+
+            $('#end-title').html(end_title)
+            $('#end-wiki-links').html(wiki_liks)
+            $('#question').hide()
+            $('#all-answers').hide()
+            $('#end').show()
+        }
+
+        function handleClick(ele) {
+            console.log(ele)
+            location.hash = $('#question').attr('question_id')
+            nextThing = ele.attr('id')
+            if (clickPath == '') {
+                clickPath += "What do you want to do? " + ele.text()
+            } else {
+                clickPath += ' > ' + $('#question').text() + ' ' + ele.text()
+            }
+            console.log(nextThing)
+            if (nextThing.match(/^end-/)) {
+                handleEndOfPath(nextThing)
+            } else {
+                updateForNextQuestion(nextThing)
+            }
+        }
+
+        function updateForNextQuestion(questionId) {
+            if (questionId.match(/^end-/)) {
+                console.log('This is an end')
+                handleEndOfPath(questionId)
+                return
+            }
+            currentQuestionId = questionId;
+            $('#question').attr('question_id', questionId);
+            $('#question').text(path[questionId]['question_text']);
+            location.hash = $('#question').attr('question_id')
+            var answersHtml = '';
+            
+            $.each(path[questionId].answers, function(ind,v){
+                console.log(v.answer_text)
+                answersHtml += buildAnswer(v)
+            })
+
+            $('#all-answers').html(answersHtml)
+
+            $('.answer_click').click(function() {
+                handleClick($(this))
+            });
+        }
+
+        function buildAnswer(answerObj) {
+            answer_text = answerObj['answer_text']
+            return_string = '<p class="answer_click" id="' + answerObj['links_to'] + '"> ' + answer_text + '</a><br />'
+            return return_string
+        }
+
+        function initPath() {
+            clickPath = ''
+            var questionId = 'q1';
+            currentQuestionId = questionId;
+            $('#question').attr('question_id', questionId);
+            $('#question').text(path[questionId]['question_text']);
+            
+            var answersHtml = '';
+            $.each(path[questionId].answers, function(ind,v){
+                console.log(v.answer_text)
+                answersHtml += buildAnswer(v)
+            })
+            $('#all-answers').html(answersHtml)
+            
+            $('.answer_click').click(function() {
+                handleClick($(this))
+            });
+        }
+
+        $( document ).ready( initPath )
+
+    </script>
+    <title>Interactive Decision Tree for Statistical Techniques (coppelia.io)</title>
+
+    <style>
+        p {
+            color: #656569;
+            margin: 5px;
+            cursor: pointer;
+        }
+        p:before {
+            font-size: .5em;
+            line-height: .5em;
+            content: "-   ";
+        }
+        p:hover {
+            width: auto;
+            color: black;
+            background: #F1F1F1;
+        }
+        .common-title {
+            width: 100%;
+            height: 2em;
+            margin-bottom: 2em;
+            border-bottom: 1px solid black;
+            text-align: center;
+            font-size: 1.5em;
+            font-family: helvetica, sans;
+            font-variant: small-caps;
+        }
+        .common-body {
+            width: 100%;
+            text-align: center;
+            font-size: 1.5em;
+            font-family: helvetica, sans;
+            font-variant: small-caps;
+        }
+        #reset {
+            margin: 10px 10px;
+            width: 100px;
+            height: 35px;
+            line-height: 40px;
+            border: 1px solid grey;
+            background: #9C9EAD;
+            text-align: center;
+            cursor: pointer;
+            color: white;
+            font-size: 1em;
+            font-family: helvetica, sans;
+            font-variant: small-caps;
+        }
+        #reset:hover {
+            background: #7279AB;
+        }
+        #end-title {
+            width: 100%;
+            height: 2em;
+            margin-bottom: 2em;
+            border-bottom: 1px solid black;
+            text-align: center;
+            font-size: 1.5em;
+            font-family: helvetica, sans;
+            font-variant: small-caps;
+        }
+        #end-wiki-title {
+            width: 100%;
+            height: 2em;
+            margin-left: -2em;
+            font-size: 1.5em;
+            font-family: helvetica, sans;
+            font-variant: small-caps;
+        }
+        #end-click-path-title {
+            width: 100%;
+            height: 2em;
+            padding-top: 2em;
+            font-size: 1.5em;
+            font-family: helvetica, sans;
+            font-variant: small-caps;
+        }
+        #end-clickpath {
+            width: 100%;
+            font-family: helvetica, sans;
+        }
+        #end-wiki-links {
+            margin-left: 4em;
+            margin-bottom: 2em;
+        }
+        #about-toggle {
+            margin: 10px 10px;
+            margin-top: 150px;
+            width: 100px;
+            height: 35px;
+            line-height: 40px;
+            border: 1px solid grey;
+            background: #9C9EAD;
+            text-align: center;
+            cursor: pointer;
+            color: white;
+            font-size: 1em;
+            font-family: helvetica, sans;
+            font-variant: small-caps;
+        }
+        #about-body {
+            width: 100%;
+            font-family: helvetica, sans;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id='reset' onClick=initPath()> Reset Finder </div> 
+    <div id='question' class='common-title'></div>
+    <div id='all-answers' class='common-body'></div>
+    <div id='end' style="display: none;"> 
+        <div id='end-title' class='common-title'></div>
+        <div id='end-full-text'></div>
+        <div id='end-wiki-links'>
+        </div>
+        <div id='end-click-path-title'>Click Path (how did you get here?)</div>
+        <div id='end-clickpath'></div>
+    </div>
+    <div id='about-toggle' onClick=showAbout()> About This </div>
+    <div id='about-body'>
+        This document was created from a flow chart created by <a href='coppelia.io/2015/09/a-decision-process-for-selecting-statistical-techniques/'>Simon Raper, via coppelia.io</a>.  I take absolutely no responsibilty for any of these recommendations, and I don't really have any solid knowledge of statistics or statistical techniques. I created this as a learning excersize, and because I wanted to use the flowchart but it was difficult to use.
+        <br /><br />
+        If you see any issues with this page, or want to make any suggestions, please open an issue on <a href='github.com/brewneaux/coppeliaInteractiveStatsTechniqueDecisionTree'>GitHub</a> or email me via my <a href='https://github.com/brewneaux'>GitHub profile</a>
+    </div>
+</body>
+</html>
+
